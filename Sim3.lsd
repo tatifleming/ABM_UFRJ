@@ -1,0 +1,222 @@
+	
+Label Root
+{
+	Son: Sector
+	Label Sector
+	{
+		Son: FIRM
+		Label FIRM
+		{
+			Var: Cost
+			Var: Desired
+			Var: Price
+			Param: avg
+			Param: markup
+			Param: monopoly_degree
+			Param: sd
+
+		}
+
+		Var: Avg_Price
+		Var: Max_Price_2
+		Var: Avg_Price_2
+		Var: Max_Price
+
+	}
+
+
+}
+
+
+DATA
+
+Object: Root C	1
+
+Object: Sector C	1
+Var: Avg_Price 0 s + n p
+Var: Max_Price_2 0 s + n n
+Var: Avg_Price_2 0 s + n n
+Var: Max_Price 0 s + n n
+
+Object: FIRM C	5
+Var: Cost 0 n + n n
+Var: Desired 0 n + n n
+Var: Price 1 s + n p	7.46847720886082	7.71281465921179	6.50272727314064	7.94591200975837	7.20617519893058
+Param: avg 0 n + n n	5	5	5	5	5
+Param: markup 0 n + n n	0.5	0.5	0.5	0.5	0.5
+Param: monopoly_degree 0 s + n n	0.5	0.5	0.5	0.5	0.5
+Param: sd 0 n + n n	1	1	1	1	1
+
+SIM_NUM 1
+SEED 3
+MAX_STEP 100
+EQUATION fun_exercise_2.cpp
+MODELREPORT report_Sim1.html
+
+DESCRIPTION
+
+Object_Root
+
+END_DESCRIPTION
+
+Object_Sector
+
+END_DESCRIPTION
+
+Variable_Avg_Price
+
+END_DESCRIPTION
+
+Variable_Max_Price_2
+
+END_DESCRIPTION
+
+Variable_Avg_Price_2
+
+END_DESCRIPTION
+
+Variable_Max_Price
+
+END_DESCRIPTION
+
+Object_FIRM
+
+END_DESCRIPTION
+
+Variable_Cost
+
+END_DESCRIPTION
+
+Variable_Desired
+
+END_DESCRIPTION
+
+Variable_Price
+
+_INIT_
+All 5 instances equal to 1
+END_DESCRIPTION
+
+Parameter_avg
+
+_INIT_
+All 5 instances equal to 5
+END_DESCRIPTION
+
+Parameter_markup
+
+_INIT_
+All 5 instances equal to 0.5
+END_DESCRIPTION
+
+Parameter_monopoly_degree
+
+_INIT_
+All 5 instances equal to 0.5
+END_DESCRIPTION
+
+Parameter_sd
+
+_INIT_
+All 5 instances equal to 1
+END_DESCRIPTION
+
+
+DOCUOBSERVE
+
+END_DOCUOBSERVE
+
+
+DOCUINITIAL
+
+END_DOCUINITIAL
+
+
+EQ_FILE
+//#define EIGENLIB			// uncomment to use Eigen linear algebra library
+
+#include "fun_head_fast.h"
+
+// do not add Equations in this area
+
+MODELBEGIN
+
+// insert your equations here, ONLY between the MODELBEGIN and MODELEND words
+
+//PART 1
+EQUATION("Price")
+v[0] = V("monopoly_degree");  // parameter: monopoly degree
+v[1] = V("Cost");
+v[2] = V("Desired");
+v[3] = AVEL("Price", 1);
+v[4] = v[0]*v[2]+(1 - v[0])*v[3];
+RESULT(v[4])
+
+EQUATION("Desired")
+v[0]= V("Cost"); // Cost of Firm i in period t
+v[1]= V("markup"); // parameter: fixed markup
+v[2]= (1 + v[1])*v[0];
+RESULT(v[2])
+
+EQUATION ("Cost")
+v[0]= V("avg"); //parameter
+v[1] = V("sd"); //parameter
+v[2] = norm(v[0],v[1]); 
+RESULT(v[2])
+
+EQUATION("Avg_Price") // o preço médio está no setor, mas está olhando para o obj. filho (firma)
+v[0]=0;
+v[2]=0;
+CYCLE(cur, "FIRM")
+{
+	v[1]=VS(cur, "Price"); // sum of prices
+	v[0] = v[0] +v[1];     //count firms
+	v[2] = v[2] +1; 
+}
+v[3]=v[0]/v[2];
+RESULT(v[3])
+
+//outra forma de fazer a equação acima, seria:
+EQUATION("Avg_Price_2")
+RESULT(AVE("Price"))
+
+// PART 2
+// Using the CYCLE, create a variable on the Sector object that finds the value of the maximum price among the firms in each period. (Hint: you might need to use ”if else”. Check the documentation to see how to use the conditional) 
+
+// a lógica do LSD é sempre começar pelo objeto mais alto (root)
+// a partir daí, ele começa a calcular na ordem de cima para baixo
+// as variáveis do nível da firma só são calculadas após calcular o setor
+// ele pode ir pausando os cálculos e depois retornar
+// se a ordem fizer um sentido econômico, é importante dizer
+
+EQUATION("Max_Price")
+v[0]=0;
+CYCLE(cur, "FIRM")         // da firma, precisamos pegar o preço, não o preço máximo
+{
+  v[1] = VS(cur, "Price");   // a cada círculo, vou salvar o preço do firma
+  if(v[1]>v[0])              // se tiver mais que uma linha no if, precisamos colocar colchetes para evitar erro de compilação. Nesse caso, só temos 1 linha
+  {                                       
+  v[0] = v[1];
+  }
+  else
+  {
+     v[0]=v[0];             
+  }
+}
+RESULT(v[0])
+
+//outra forma de fazer a equação acima, seria:
+EQUATION("Max_Price_2")
+v[0]=MAX("Price")
+RESULT(v[0])
+
+MODELEND
+
+// do not add Equations in this area
+
+void close_sim( void )
+{
+	// close simulation special commands go here
+}
+
+END_EQ_FILE
