@@ -278,6 +278,35 @@ Interest received from deposits by capital-good sector
 RESULT( SUM( "_iD1" ) )
 
 
+
+EQUATION("green")
+v[0] = uniform(0, 1);  
+
+if (v[0] >= 0.8)
+{
+  v[1] = log(v[0]);
+}
+else
+{
+ v[1] = v[0];
+}
+  
+RESULT(v[1])
+
+EQUATION("dig")
+v[0] = uniform(0, 1);  
+
+if (v[0] >= 0.8)
+{
+  v[1] = exp(v[0]);
+}
+else
+{
+ v[1] = v[0];
+}
+  
+RESULT(v[1])
+
 EQUATION( "imi" )
 /*
 Imitation success rate in capital-good sector
@@ -289,6 +318,20 @@ SUM( "_NC" );									// ensure brochures distributed
 RESULT( SUM( "_imi" ) / V( "F1" ) )
 
 
+EQUATION("imi_green")
+/*
+Imitation success rate in capital-good sector with the probability of the product or process being green or not
+*/
+SUM( "_Atau" );									// ensure innovation is done
+SUM( "_NC" );									// ensure brochures distributed
+RESULT( SUM( "_imi_green" )*V("green") / V( "F1" ) )
+
+EQUATION("imi_dig")
+SUM( "_Atau" );									// ensure innovation is done
+SUM( "_NC" );									// ensure brochures distributed
+RESULT( SUM( "_imi_dig" )*V("dig") / V( "F1" ) )
+
+
 EQUATION( "inn" )
 /*
 Innovation success rate in capital-good sector
@@ -297,6 +340,15 @@ learning-by-doing skills are updated
 */
 V( "imi" );										// ensure innovation is done
 RESULT( SUM( "_inn" ) / V( "F1" ) )
+
+
+EQUATION( "inn_green")
+V( "imi" );										// ensure innovation is done
+RESULT( SUM( "_inn_green" )*V("green") / V( "F1" ) )
+
+EQUATION( "inn_dig")
+V( "imi" );										// ensure innovation is done
+RESULT( SUM( "_inn_dig" )*V("dig") / V( "F1" ) )
 
 
 EQUATION( "p1avg" )
